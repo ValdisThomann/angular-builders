@@ -13,7 +13,8 @@ import {
   removePackageFromPackageJson,
   addPackageToPackageJson,
   editTsConfigSpecJson,
-  runNpmPackageInstall
+  runNpmPackageInstall,
+  hostRead
 } from "../utils";
 
 export function addJest(): Rule {
@@ -70,7 +71,7 @@ function switchToJestBuilderInAngularJson(): Rule {
       return host;
     }
 
-    const sourceText = host.read(ANGULAR_JSON).toString("utf-8");
+    const sourceText = hostRead(host, ANGULAR_JSON);
     const angularJson = JSON.parse(sourceText);
     const defaultProject = angularJson["defaultProject"];
 
@@ -101,7 +102,7 @@ function editTsConfigRootJson(): Rule {
       return host;
     }
 
-    const sourceText = host.read(TSCONFIG).toString("utf-8");
+    const sourceText = hostRead(host, TSCONFIG);
     const tsconfigJson = JSON.parse(sourceText);
 
     if (!tsconfigJson["exclude"]) {
