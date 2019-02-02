@@ -5,8 +5,8 @@ import {
   SchematicContext
 } from "@angular-devkit/schematics";
 
-export const ANGULAR_JSON = 'angular.json';
-export const TSCONFIG = './tsconfig.json';
+export const ANGULAR_JSON = "angular.json";
+export const TSCONFIG = "./tsconfig.json";
 
 import {
   deleteFile,
@@ -19,9 +19,6 @@ import {
 
 export function addJest(): Rule {
   return chain([
-    // removePackageFromPackageJson("devDependencies", "@types/jasmine"),
-    // removePackageFromPackageJson("devDependencies", "jasmine-core"),
-    // removePackageFromPackageJson("devDependencies", "jasmine-spec-reporter"),
     removePackageFromPackageJson("devDependencies", "karma"),
     removePackageFromPackageJson("devDependencies", "karma-chrome-launcher"),
     removePackageFromPackageJson(
@@ -34,34 +31,13 @@ export function addJest(): Rule {
       "karma-jasmine-html-reporter"
     ),
     deleteFile("src/karma.conf.js"),
-    deleteFile("src/test.ts"),    
+    deleteFile("src/test.ts"),
     addPackageToPackageJson("devDependencies", "jest"),
-    addPackageToPackageJson(
-      "devDependencies",
-      "@angular-builders/jest"
-    ),
-    // addPackageToPackageJson(
-    //   "devDependencies",
-    //   "@types/jest"
-    // ),
-    // addPackageToPackageJson(
-    //   "devDependencies",
-    //   "babel-core"
-    // ),
-    // addPackageToPackageJson(
-    //   "devDependencies",
-    //   "babel-jest"
-    // ),
-    // addPackageToPackageJson(
-    //   "devDependencies",
-    //   "jest-preset-angular"
-    // ),
-    runNpmPackageInstall(),    
-    editTsConfigSpecJson("src"),    
+    addPackageToPackageJson("devDependencies", "@angular-builders/jest"),
+    runNpmPackageInstall(),
+    editTsConfigSpecJson("src"),
     editTsConfigRootJson(),
-    switchToJestBuilderInAngularJson(),
-    // createLaunchJson(),
-    // copyConfigFiles("jest")
+    switchToJestBuilderInAngularJson()
   ]);
 }
 

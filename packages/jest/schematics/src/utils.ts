@@ -1,18 +1,15 @@
-import {
-  Rule,
-  SchematicContext,
-  Tree,
-} from "@angular-devkit/schematics";
+import { Rule, SchematicContext, Tree } from "@angular-devkit/schematics";
 import { NodePackageInstallTask } from "@angular-devkit/schematics/tasks";
 
 const PACKAGE_JSON = "package.json";
+const TSCONFIG_SPEC_JSON = "tsconfig.spec.json";
 
 export function hostRead(host: Tree, filePath: string) {
-    const buffer = host.read(filePath);
-    if (!buffer) {
-        throw new Error(`Could not read file ${filePath}`);
-    }
-    return buffer.toString("utf-8");
+  const buffer = host.read(filePath);
+  if (!buffer) {
+    throw new Error(`Could not read file ${filePath}`);
+  }
+  return buffer.toString("utf-8");
 }
 
 export function removePackageFromPackageJson(type: string, pkg: string): Rule {
@@ -67,16 +64,15 @@ export function addPackageToPackageJson(
   };
 }
 
-
 export function editTsConfigSpecJson(path: string): Rule {
   return (host: Tree, _: SchematicContext) => {
-    if (!host.exists(`${path}/tsconfig.spec.json`)) {
+    const filePath = `${path}/${TSCONFIG_SPEC_JSON}`;
+    if (!host.exists(filePath)) {
       return host;
     }
 
-    const sourceText = hostRead(host, PACKAGE_JSON);
+    const sourceText = hostRead(host, filePath);
     const tsconfigJson = JSON.parse(sourceText);
-
     if (tsconfigJson["files"]) {
       delete tsconfigJson["files"];
     }
@@ -93,10 +89,7 @@ export function editTsConfigSpecJson(path: string): Rule {
 
     tsconfigJson["compilerOptions"]["module"] = "commonjs";
 
-    host.overwrite(
-      `${path}/tsconfig.spec.json`,
-      JSON.stringify(tsconfigJson, null, 2)
-    );
+    host.overwrite(filePath, JSON.stringify(tsconfigJson, null, 2));
 
     return host;
   };
