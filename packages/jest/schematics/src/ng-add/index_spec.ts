@@ -1,4 +1,3 @@
-// import { Tree } from "@angular-devkit/schematics";
 import {
   SchematicTestRunner,
   UnitTestTree
@@ -47,10 +46,12 @@ describe("ng-add", () => {
         appTree
       );
     });
-    it("works", () => {
-      const tree = runner.runSchematic("ng-add", {}, appTree);
-      console.log(tree.files);
-      expect(tree.files).not.toContain("src/karma.conf.js", "src/test.ts");
+    it("works", async done => {
+      runner.runSchematicAsync("ng-add", {}, appTree).subscribe(tree => {
+        console.log(tree.files);
+        expect(tree.files).not.toContain("src/karma.conf.js", "src/test.ts");
+        done();
+      });
     });
   });
 });

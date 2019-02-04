@@ -10,6 +10,8 @@ import {
   NodeDependencyType
 } from "@schematics/angular/utility/dependencies";
 
+import { concatMap, map } from "rxjs/operators";
+
 export const ANGULAR_JSON = "angular.json";
 export const TSCONFIG = "./tsconfig.json";
 
@@ -18,41 +20,66 @@ import {
   removePackageFromPackageJson,
   editTsConfigSpecJson,
   runNpmPackageInstall,
-  hostRead
+  hostRead,
+  getLatestNodeVersion,
+  NodePackage
 } from "../utils";
+import { of, Observable, concat } from "rxjs";
+import { NodePackageInstallTask } from "@angular-devkit/schematics/tasks";
 
 export function addJest(): Rule {
   return chain([
-    removePackageFromPackageJson("devDependencies", "karma"),
-    removePackageFromPackageJson("devDependencies", "karma-chrome-launcher"),
-    removePackageFromPackageJson(
-      "devDependencies",
-      "karma-coverage-istanbul-reporter"
-    ),
-    removePackageFromPackageJson("devDependencies", "karma-jasmine"),
-    removePackageFromPackageJson(
-      "devDependencies",
-      "karma-jasmine-html-reporter"
-    ),
     deleteFile("src/karma.conf.js"),
     deleteFile("src/test.ts"),
-    (host: Tree) => {
-      addPackageJsonDependency(host, {
-        type: NodeDependencyType.Dev,
-        name: "@angular-builders/jest",
-        version: "0.0.0-PLACEHOLDER"
-      });
-      addPackageJsonDependency(host, {
-        type: NodeDependencyType.Dev,
-        name: "jest",
-        version: "0.0.0-PLACEHOLDER"
-      });
-    },
+    updateDependencies(),
     runNpmPackageInstall(),
     editTsConfigSpecJson("src"),
     editTsConfigRootJson(),
     switchToJestBuilderInAngularJson()
   ]);
+}
+
+function updateDependencies(): Rule {
+  return (tree: Tree, context: SchematicContext): Observable<Tree> => {
+    context.logger.debug("Updating dependencies...");
+    context.addTask(new NodePackageInstallTask());
+
+    const removeDependencies = of(
+      "karma",
+      "karma-jasmine",
+      "karma-jasmine-html-reporter",
+      "karma-chrome-launcher",
+      "karma-coverage-istanbul-reporter"
+    ).pipe(
+      map((packageName: string) => {
+        context.logger.debug(`Removing ${packageName} dependency`);
+
+        removePackageFromPackageJson(NodeDependencyType.Dev, packageName);
+
+        return tree;
+      })
+    );
+
+    const addDependencies = of("jest", "@angular-builders/jest").pipe(
+      concatMap((packageName: string) => getLatestNodeVersion(packageName)),
+      map((packageFromRegistry: NodePackage) => {
+        const { name, version } = packageFromRegistry;
+        context.logger.debug(
+          `Adding ${name}:${version} to ${NodeDependencyType.Dev}`
+        );
+
+        addPackageJsonDependency(tree, {
+          type: NodeDependencyType.Dev,
+          name,
+          version
+        });
+
+        return tree;
+      })
+    );
+
+    return concat(removeDependencies, addDependencies);
+  };
 }
 
 function switchToJestBuilderInAngularJson(): Rule {

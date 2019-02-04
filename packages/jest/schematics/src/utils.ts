@@ -1,8 +1,14 @@
 import { Rule, SchematicContext, Tree } from "@angular-devkit/schematics";
 import { NodePackageInstallTask } from "@angular-devkit/schematics/tasks";
+import { get } from "http";
 
 const PACKAGE_JSON = "package.json";
 const TSCONFIG_SPEC_JSON = "tsconfig.spec.json";
+
+export interface NodePackage {
+  name: string;
+  version: string;
+}
 
 export function hostRead(host: Tree, filePath: string) {
   const buffer = host.read(filePath);
@@ -97,7 +103,9 @@ export function editTsConfigSpecJson(path: string): Rule {
 
 export function deleteFile(file: string) {
   return (host: Tree, _: SchematicContext) => {
-    host.delete(file);
+    if (host.exists(file)) {
+      host.delete(file);
+    }
 
     return host;
   };
@@ -108,4 +116,34 @@ export function runNpmPackageInstall() {
     context.addTask(new NodePackageInstallTask());
     return host;
   };
+}
+
+export function getLatestNodeVersion(
+  packageName: string
+): Promise<NodePackage> {
+  const DEFAULT_VERSION = "latest";
+
+  return new Promise(resolve => {
+    return get(`http://registry.npmjs.org/${packageName}`, res => {
+      let rawData = "";
+      res.on("data", chunk => (rawData += chunk));
+      res.on("end", () => {
+        try {
+          const response = JSON.parse(rawData);
+          const version = (response && response["dist-tags"]) || {};
+
+          resolve(buildPackage(packageName, version.latest));
+        } catch (e) {
+          resolve(buildPackage(packageName));
+        }
+      });
+    }).on("error", () => resolve(buildPackage(packageName)));
+  });
+
+  function buildPackage(
+    name: string,
+    version: string = DEFAULT_VERSION
+  ): NodePackage {
+    return { name, version };
+  }
 }
