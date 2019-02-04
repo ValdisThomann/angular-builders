@@ -49,9 +49,8 @@ describe("ng-add", () => {
     });
     it("works", () => {
       const tree = runner.runSchematic("ng-add", {}, appTree);
-      console.log(tree.root);
+      console.log(tree.files);
       expect(tree.files).not.toContain("src/karma.conf.js", "src/test.ts");
-      // expect(tree.root)
     });
   });
 });

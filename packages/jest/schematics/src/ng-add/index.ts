@@ -5,13 +5,17 @@ import {
   SchematicContext
 } from "@angular-devkit/schematics";
 
+import {
+  addPackageJsonDependency,
+  NodeDependencyType
+} from "@schematics/angular/utility/dependencies";
+
 export const ANGULAR_JSON = "angular.json";
 export const TSCONFIG = "./tsconfig.json";
 
 import {
   deleteFile,
   removePackageFromPackageJson,
-  addPackageToPackageJson,
   editTsConfigSpecJson,
   runNpmPackageInstall,
   hostRead
@@ -32,8 +36,18 @@ export function addJest(): Rule {
     ),
     deleteFile("src/karma.conf.js"),
     deleteFile("src/test.ts"),
-    addPackageToPackageJson("devDependencies", "jest"),
-    addPackageToPackageJson("devDependencies", "@angular-builders/jest"),
+    (host: Tree) => {
+      addPackageJsonDependency(host, {
+        type: NodeDependencyType.Dev,
+        name: "@angular-builders/jest",
+        version: "0.0.0-PLACEHOLDER"
+      });
+      addPackageJsonDependency(host, {
+        type: NodeDependencyType.Dev,
+        name: "jest",
+        version: "0.0.0-PLACEHOLDER"
+      });
+    },
     runNpmPackageInstall(),
     editTsConfigSpecJson("src"),
     editTsConfigRootJson(),
